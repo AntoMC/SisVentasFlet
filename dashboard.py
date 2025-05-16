@@ -12,9 +12,9 @@ def main(page: ft.Page):
     drawer = ft.NavigationDrawer(
         selected_index=0,
         controls=[
-            ft.NavigationDrawerDestination(icon=ft.icons.HOME, label="Inicio"),
-            ft.NavigationDrawerDestination(icon=ft.icons.ANALYTICS, label="Reportes"),
-            ft.NavigationDrawerDestination(icon=ft.icons.SETTINGS, label="Configuración"),
+            ft.NavigationDrawerDestination(icon=ft.Icons.HOME, label="Inicio"),
+            ft.NavigationDrawerDestination(icon=ft.Icons.ANALYTICS, label="Reportes"),
+            ft.NavigationDrawerDestination(icon=ft.Icons.SETTINGS, label="Configuración"),
         ],
     )
 
@@ -48,7 +48,7 @@ def main(page: ft.Page):
             controls=[
                 ft.AppBar(
                     title=ft.Text("Dashboard"),
-                    leading=ft.IconButton(ft.icons.MENU, on_click=open_drawer),
+                    leading=ft.IconButton(ft.Icons.MENU, on_click=open_drawer),
                     #bgcolor=ft.colors.BLUE,
                 ),
                 content,

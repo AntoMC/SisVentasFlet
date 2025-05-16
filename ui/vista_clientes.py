@@ -3,7 +3,7 @@ import re
 from db.bd_ventas import *  # Asegúrate de que esta importación esté correcta
 def vista_clientes(page: ft.Page):
     # texto informativo de lo que esta ocurriendo en la aplicacion 
-    mensaje = ft.Text(size=20, weight=ft.FontWeight.BOLD, color=ft.colors.BLUE) 
+    mensaje = ft.Text(size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE) 
     lista_de_clientes = ft.ListView(expand=True, spacing=2)
     # Variables para modo edición
     modo_edicion = {"activo": False, "dni": None}
@@ -21,10 +21,10 @@ def vista_clientes(page: ft.Page):
         )
     
     # Inputs de clientes
-    nombre_cliente =  ft.TextField(label="Nombre",height=50, expand=True, border=ft.InputBorder.UNDERLINE, border_color="gray",text_size=16,content_padding=ft.padding.symmetric(horizontal=8, vertical=5), color=ft.colors.BLUE)
-    dni_cliente =  ft.TextField(label="Dni",height=50, expand=True, border=ft.InputBorder.UNDERLINE, border_color="gray",text_size=16,content_padding=ft.padding.symmetric(horizontal=8, vertical=5), color=ft.colors.BLUE)
-    tel_cliente =  ft.TextField(label="Telefono",height=50, expand=True, border=ft.InputBorder.UNDERLINE, border_color="gray",text_size=16,content_padding=ft.padding.symmetric(horizontal=8, vertical=5), color=ft.colors.BLUE)
-    dir_cliente =  ft.TextField(label="DIreccion",height=50, expand=True, border=ft.InputBorder.UNDERLINE, border_color="gray",text_size=16,content_padding=ft.padding.symmetric(horizontal=8, vertical=5), color=ft.colors.BLUE)
+    nombre_cliente =  ft.TextField(label="Nombre",height=50, expand=True, border=ft.InputBorder.UNDERLINE, border_color="gray",text_size=16,content_padding=ft.padding.symmetric(horizontal=8, vertical=5), color=ft.Colors.BLUE)
+    dni_cliente =  ft.TextField(label="Dni",height=50, expand=True, border=ft.InputBorder.UNDERLINE, border_color="gray",text_size=16,content_padding=ft.padding.symmetric(horizontal=8, vertical=5), color=ft.Colors.BLUE)
+    tel_cliente =  ft.TextField(label="Telefono",height=50, expand=True, border=ft.InputBorder.UNDERLINE, border_color="gray",text_size=16,content_padding=ft.padding.symmetric(horizontal=8, vertical=5), color=ft.Colors.BLUE)
+    dir_cliente =  ft.TextField(label="DIreccion",height=50, expand=True, border=ft.InputBorder.UNDERLINE, border_color="gray",text_size=16,content_padding=ft.padding.symmetric(horizontal=8, vertical=5), color=ft.Colors.BLUE)
 
     def cargar_datos():
         conn = sqlite3.connect("ventas.db")
@@ -41,16 +41,55 @@ def vista_clientes(page: ft.Page):
                     ft.Text(dni, width=100),
                     ft.Text(tel, width=100),
                     ft.Text(dir, width=100),
-                    ft.IconButton(
-                        icon=ft.icons.EDIT, 
-                        width=100, 
-                        on_click=lambda e, n=nombre, d=dni, t=tel, di=dir: on_editar_cliente(n, d, t, di)
+                    ft.Row(
+                        controls=[
+                            ft.IconButton(
+                                icon=ft.Icons.EDIT, 
+                                width=45, 
+                                on_click=lambda e, n=nombre, d=dni, t=tel, di=dir: on_editar_cliente(n, d, t, di)
+                            ),
+                            ft.IconButton(
+                                icon=ft.Icons.DELETE, 
+                                width=45, 
+                                on_click=lambda e, d=dni: on_eliminar_cliente(d)
+                            ),
+                        ]
                     )
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_AROUND
             )
             registros.append(fila)
         return registros
+    
+    def on_eliminar_cliente(dni):
+        def confirmar_eliminacion(e):
+            try:
+                conn = sqlite3.connect("ventas.db")
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM clientes WHERE dni = ?", (dni,))
+                conn.commit()
+                conn.close()
+                mensaje.value = "Cliente eliminado."
+            except Exception as ex:
+                mensaje.value = f"Error al eliminar cliente: {ex}"
+            # Actualiza la lista después de eliminar
+            lista_de_clientes.controls.clear()
+            lista_de_clientes.controls.extend(cargar_datos())
+            lista_de_clientes.update()
+            dialogo.open = False
+            page.update()
+
+        dialogo = ft.AlertDialog(
+            title=ft.Text("Eliminar Cliente"),
+            content=ft.Text(f"¿Estás seguro de que deseas eliminar el cliente con DNI {dni}?"),
+            actions=[
+                ft.TextButton("Cancelar", on_click=lambda e: dialogo.close()),
+                ft.TextButton("Eliminar", on_click=confirmar_eliminacion),
+            ],
+        )
+        page.dialog = dialogo
+        dialogo.open = True
+        #page.update()
 
     def on_editar_cliente(nombre, dni, tel, dir):
         nombre_cliente.value = nombre
@@ -127,7 +166,7 @@ def vista_clientes(page: ft.Page):
         hint_text="Buscar por nombre o DNI",
         on_submit=lambda e: buscar_clientes(),
         expand=True,
-        color=ft.colors.BLUE
+        color=ft.Colors.BLUE
     )
 
     def buscar_clientes():
@@ -150,7 +189,7 @@ def vista_clientes(page: ft.Page):
                     ft.Text(tel, width=100),
                     ft.Text(dir, width=100),
                     ft.IconButton(
-                        icon=ft.icons.EDIT, 
+                        icon=ft.Icons.EDIT, 
                         width=100, 
                         on_click=lambda e, n=nombre, d=dni, t=tel, di=dir: on_editar_cliente(n, d, t, di)
                     )
@@ -188,15 +227,15 @@ def vista_clientes(page: ft.Page):
                     ft.Container(expand=True),
                     campo_busqueda,
                     ft.IconButton(
-                        icon=ft.icons.SEARCH,
-                        icon_color=ft.colors.BLUE,
+                        icon=ft.Icons.SEARCH,
+                        icon_color=ft.Colors.BLUE,
                         on_click=lambda e: buscar_clientes()
                     ),
                 ]
             ),
             ft.Divider(),
             poner_encabezdo(),
-            ft.Container(content=lista_de_clientes, height=400 ,bgcolor=ft.colors.BLACK45),
+            ft.Container(content=lista_de_clientes, height=400 ,bgcolor=ft.Colors.BLACK45),
             #mensaje
         ],
         expand=4,
@@ -205,9 +244,9 @@ def vista_clientes(page: ft.Page):
     contenedor = ft.Container(
         content=ft.Row(controls=[columna_registro, ft.Container(width=60), columna_lista], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
         padding=20,
-        bgcolor=ft.colors.BLACK26,
+        bgcolor=ft.Colors.BLACK26,
         border_radius=10,
-        border=ft.border.all(3, ft.colors.BLUE),
+        border=ft.border.all(3, ft.Colors.BLUE),
     )
 
     #  Cargar los datos del ListView apenas la página esté renderizada
