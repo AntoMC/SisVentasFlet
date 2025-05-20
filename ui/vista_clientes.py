@@ -1,6 +1,6 @@
 import flet as ft
 import re
-from db.bd_ventas import *  # Asegúrate de que esta importación esté correcta
+from controllers.clientes_controller import*
 def vista_clientes(page: ft.Page):
     # texto informativo de lo que esta ocurriendo en la aplicacion 
     mensaje = ft.Text(size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE) 
@@ -29,10 +29,7 @@ def vista_clientes(page: ft.Page):
     def cargar_datos():
         conn = sqlite3.connect("ventas.db")
         cursor = conn.cursor()
-        registros_clientes = cursor.execute("""
-            SELECT nombre, dni, telefono, direccion
-            FROM clientes
-        """)
+        registros_clientes = controller_obtener_clientes()
         registros = []
         for nombre, dni, tel, dir in registros_clientes:
             fila = ft.Row(
@@ -52,7 +49,7 @@ def vista_clientes(page: ft.Page):
                                 icon=ft.Icons.DELETE, 
                                 width=45, 
                                 on_click=lambda e, d=dni: on_eliminar_cliente(d)
-                            ),
+                            )
                         ]
                     )
                 ],
@@ -64,11 +61,7 @@ def vista_clientes(page: ft.Page):
     def on_eliminar_cliente(dni):
         def confirmar_eliminacion(e):
             try:
-                conn = sqlite3.connect("ventas.db")
-                cursor = conn.cursor()
-                cursor.execute("DELETE FROM clientes WHERE dni = ?", (dni,))
-                conn.commit()
-                conn.close()
+                controller_eliminar_cliente(dni)
                 mensaje.value = "Cliente eliminado."
             except Exception as ex:
                 mensaje.value = f"Error al eliminar cliente: {ex}"
@@ -90,6 +83,12 @@ def vista_clientes(page: ft.Page):
         page.dialog = dialogo
         dialogo.open = True
         #page.update()
+    def limpiar_campos(e):
+        nombre_cliente.value = dni_cliente.value = tel_cliente.value = dir_cliente.value = ""
+        modo_edicion["activo"] = False
+        modo_edicion["dni"] = None
+        boton_registrar.text = "Registrar"
+        page.update()
 
     def on_editar_cliente(nombre, dni, tel, dir):
         nombre_cliente.value = nombre
@@ -99,7 +98,7 @@ def vista_clientes(page: ft.Page):
         modo_edicion["activo"] = True
         modo_edicion["dni"] = dni
         mensaje.value = "Editando cliente..."
-        boton_registrar.text = "Actualizar"
+        boton_registrar.text = "ACTUALIZAR"
         boton_registrar.update()
         page.update()
         
@@ -135,22 +134,18 @@ def vista_clientes(page: ft.Page):
         if modo_edicion["activo"]:
             # Actualizar cliente
             try:
-                conn = sqlite3.connect("ventas.db")
-                cursor = conn.cursor()
-                actualizar_cliente(nombre_cliente.value, modo_edicion["dni"], tel_cliente.value, dir_cliente.value)
-                conn.commit()
-                conn.close()
+                controller_actualizar_cliente(nombre_cliente.value, modo_edicion["dni"], tel_cliente.value, dir_cliente.value)
                 mensaje.value = "Cliente actualizado."
             except Exception as ex:
                 mensaje.value = f"Error al actualizar cliente: {ex}"
             modo_edicion["activo"] = False
             modo_edicion["dni"] = None
-            boton_registrar.text = "Registrar"
+            boton_registrar.text = "REGISTRAR"
             boton_registrar.update()
         else:
             # Registrar cliente nuevo
             try:
-                registrar_cliente(nombre_cliente.value, dni_cliente.value, tel_cliente.value, dir_cliente.value)
+                controller_registrar_cliente(nombre_cliente.value, dni_cliente.value, tel_cliente.value, dir_cliente.value)
                 mensaje.value = "Cliente Registrado."
             except:
                 mensaje.value = "Error al registrar cliente."
@@ -172,38 +167,41 @@ def vista_clientes(page: ft.Page):
     def buscar_clientes():
         texto = campo_busqueda.value.strip().lower()
         lista_de_clientes.controls.clear()
-        conn = sqlite3.connect("ventas.db")
-        cursor = conn.cursor()
         if texto:
-            cursor.execute("""
-                SELECT nombre, dni, telefono, direccion FROM clientes
-                WHERE LOWER(nombre) LIKE ? OR dni LIKE ?
-            """, (f"%{texto}%", f"%{texto}%"))
+            clientes=controller_buscar_cliente(texto,texto)
         else:
-            cursor.execute("SELECT nombre, dni, telefono, direccion FROM clientes")
-        for nombre, dni, tel, dir in cursor.fetchall():
+            clientes=controller_obtener_clientes()
+        for nombre, dni, tel, dir in clientes:
             fila = ft.Row(
                 controls=[
                     ft.Text(nombre, width=200),
                     ft.Text(dni, width=100),
                     ft.Text(tel, width=100),
                     ft.Text(dir, width=100),
-                    ft.IconButton(
-                        icon=ft.Icons.EDIT, 
-                        width=100, 
-                        on_click=lambda e, n=nombre, d=dni, t=tel, di=dir: on_editar_cliente(n, d, t, di)
+                    ft.Row(
+                        controls=[
+                            ft.IconButton(
+                                icon=ft.Icons.EDIT, 
+                                width=45, 
+                                on_click=lambda e, n=nombre, d=dni, t=tel, di=dir: on_editar_cliente(n, d, t, di)
+                            ),
+                            ft.IconButton(
+                                icon=ft.Icons.DELETE, 
+                                width=45, 
+                                on_click=lambda e, d=dni: on_eliminar_cliente(d)
+                            )
+                        ]
                     )
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_AROUND
             )
             lista_de_clientes.controls.append(fila)
-        conn.close()
         lista_de_clientes.update()
 
 
     # Crea el botón como variable para poder actualizar su texto
-    boton_registrar = ft.FilledButton("REGISTRAR", on_click=on_registrar_cliente, expand=True,)
-
+    boton_registrar = ft.FilledButton("REGISTRAR", on_click=on_registrar_cliente, expand=True)
+    boton_cancelar = ft.FilledButton(text="CANCELAR", bgcolor=ft.Colors.RED, on_click=limpiar_campos, expand=True) 
     # Armamos la vista
     columna_registro = ft.Column(
         controls=[
@@ -214,7 +212,8 @@ def vista_clientes(page: ft.Page):
             ft.Row(controls=[dni_cliente]),
             ft.Row(controls=[tel_cliente]),
             ft.Row(controls=[dir_cliente]),
-            ft.Row(controls=[boton_registrar])  # Usa la variable aquí
+            ft.Row(controls=[boton_registrar]),  # Usa la variable aquí
+            ft.Row(controls=[boton_cancelar])
         ],
         expand=1,
     )

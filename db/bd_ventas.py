@@ -35,26 +35,7 @@ def init_db():
     """)
     conn.commit()
     conn.close()
-# Agrega un cliente a la base de datos
-def registrar_cliente(nombre, dni, telefono, direccion):
-    conn = sqlite3.connect("ventas.db")
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO clientes (nombre, dni, telefono, direccion) VALUES (?, ?, ?, ?)",
-                   (nombre, dni, telefono, direccion))
-    conn.commit()
-    conn.close()
     
-#funcion para actualizar un cliente 
-def actualizar_cliente(nombre, dni, telefono, direccion):
-    conn = sqlite3.connect("ventas.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE clientes
-        SET nombre = ?, telefono = ?, direccion = ?
-        WHERE dni = ?
-    """, (nombre, telefono, direccion, dni))
-    conn.commit()
-    conn.close()
 # Agrega un producto a la base de datos
 def agregar_producto(nombre, precio, stock):
     conn = sqlite3.connect("ventas.db")
