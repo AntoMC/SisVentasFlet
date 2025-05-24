@@ -4,6 +4,30 @@ import sqlite3
 def init_db():
     conn = sqlite3.connect("ventas.db")
     cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS roles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT UNIQUE NOT NULL,
+            descripcion TEXT,
+            estado INTEGER NOT NULL DEFAULT 1 
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS usuario (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            rol_id INTEGER NOT NULL,
+            nombre TEXT NOT NULL,
+            tipo_documento TEXT,
+            num_documento TEXT,
+            direccion TEXT,
+            telefono TEXT,
+            email TEXT NOT NULL,
+            clave TEXT NOT NULL,
+            activo TEXT NOT NULL,
+            FOREIGN KEY(rol_id) REFERENCES rol(id)
+        )
+    """)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS clientes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

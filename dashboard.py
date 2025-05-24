@@ -1,6 +1,7 @@
 import flet as ft
 from db.bd_ventas import *
-from ui.vista_clientes import vista_clientes  # Importamos la vista
+from ui.vista_clientes import vista_clientes  # Importamos la vista de clientes
+from ui.vista_roles import vista_roles  # Importamos la vista de roles
 
 def main(page: ft.Page):
     page.title = "Dashboard con NavigationDrawer"
@@ -13,6 +14,7 @@ def main(page: ft.Page):
         selected_index=0,
         controls=[
             ft.NavigationDrawerDestination(icon=ft.Icons.HOME, label="Inicio"),
+            ft.NavigationDrawerDestination(icon=ft.Icons.VERIFIED_USER, label="Roles"),
             ft.NavigationDrawerDestination(icon=ft.Icons.ANALYTICS, label="Reportes"),
             ft.NavigationDrawerDestination(icon=ft.Icons.SETTINGS, label="Configuración"),
         ],
@@ -20,7 +22,8 @@ def main(page: ft.Page):
 
     # Función para manejar la navegación
     def on_drawer_change(e):
-        routes = ["/", "/reportes", "/configuracion"]
+        routes = ["/", 
+                  "/roles", "/reportes", "/configuracion"]
         selected = drawer.selected_index
         drawer.open = False
         page.go(routes[selected])
@@ -35,7 +38,9 @@ def main(page: ft.Page):
     # Función para manejar el cambio de ruta
     def route_change(e):
         content = vista_clientes(page)
-
+        if page.route == "/roles":
+            content = vista_roles(page)
+            
         if page.route == "/reportes":
             content = ft.Text(f"Estás en la ruta: {page.route}", size=25)
            
